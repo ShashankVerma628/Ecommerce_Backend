@@ -17,6 +17,7 @@ const CONFIG = {
   OTP_EXPIRATION_TIME: process.env.OTP_EXPIRATION_TIME,
   JWT_KEY: process.env.JWT_KEY,
   JWT_ACCESS_EXPIRATION_MINUTES: process.env.JWT_ACCESS_EXPIRATION_MINUTES,
+  REDIS_PASS: process.env.REDIS_PASS,
 };
 
 module.exports = CONFIG;
