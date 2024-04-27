@@ -4,9 +4,10 @@ const CONFIG = require("../config");
 const redis = new Redis({
   host: CONFIG.REDIS_HOST,
   port: CONFIG.REDIS_PORT,
-  options: {
-    password: CONFIG.REDIS_PASS,
-  },
+  // options: {
+  //   password: CONFIG.REDIS_PASS,
+  // },
+  password: CONFIG.REDIS_PASS,
 });
 
 redis.on("connect", () => {
