@@ -3,7 +3,7 @@ const CONFIG = require("../config");
 
 const redis = new Redis({
   host: CONFIG.REDIS_HOST,
-  port: CONFIG.REDIS_PORT,
+  // port: CONFIG.REDIS_PORT,
 });
 
 redis.on("connect", () => {
