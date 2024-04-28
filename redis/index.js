@@ -4,9 +4,6 @@ const CONFIG = require("../config");
 const redis = new Redis({
   host: CONFIG.REDIS_HOST,
   port: CONFIG.REDIS_PORT,
-  // options: {
-  //   password: CONFIG.REDIS_PASS,
-  // },
   password: CONFIG.REDIS_PASS,
 });
 
@@ -73,6 +70,7 @@ const remove = async (key) => {
  */
 const REDIS_KEYS = {
   REDIS_OTP: "__redis_otp__",
+  ADMIN_REDIS_OTP: "__redis__admin_otp__",
 };
 
 /**
@@ -81,7 +79,7 @@ const REDIS_KEYS = {
  * @returns {string} redis key
  */
 
-const getRedisKey = (type, value) => {
+const getRedisKey = (type, value = "") => {
   return `${type}:${value}`;
 };
 

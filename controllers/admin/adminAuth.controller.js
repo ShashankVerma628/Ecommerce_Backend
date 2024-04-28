@@ -1,17 +1,16 @@
-const CONFIG = require("../config");
+const CONFIG = require("../../config");
 const httpStatus = require("http-status");
-const { redis } = require("../redis");
-const { generateOTPBody } = require("../redis/otpBody");
-const { sendOtpEmail } = require("../email/otp");
-const { authServices } = require("../services");
-const { generateUsername, generateOTP } = require("../utils");
-const catchAsync = require("../utils/catchAsync");
-const { generateAuthTokens } = require("../services/token.service");
+const { redis } = require("../../redis");
+const { generateOTPBody } = require("../../redis/otpBody");
+const { generateUsername, generateOTP } = require("../../utils");
+const catchAsync = require("../../utils/catchAsync");
+const { sendOtpEmail } = require("../../email/otp");
+const adminAuthServices = require("../../services/admin/adminAuth.service");
 
 const sendOtp = catchAsync(async (req, res) => {
   const { email } = req.body;
   const cachedOtp = await redis.get(
-    redis.getRedisKey(redis.REDIS_KEYS.REDIS_OTP, email)
+    redis.getRedisKey(redis.REDIS_KEYS.ADMIN_REDIS_OTP, email)
   );
   if (cachedOtp) {
     const sentMail = await sendOtpEmail(email, cachedOtp.otp);
@@ -28,7 +27,7 @@ const sendOtp = catchAsync(async (req, res) => {
         .status(httpStatus.BAD_REQUEST);
     }
   } else {
-    const key = redis.getRedisKey(redis.REDIS_KEYS.REDIS_OTP, email);
+    const key = redis.getRedisKey(redis.REDIS_KEYS.ADMIN_REDIS_OTP, email);
     const otp = generateOTP();
     const value = generateOTPBody(email, otp, 0);
 
@@ -52,7 +51,7 @@ const sendOtp = catchAsync(async (req, res) => {
 const verifyOtp = catchAsync(async (req, res) => {
   const { otp, email } = req.body;
   const cachedOtp = await redis.get(
-    redis.getRedisKey(redis.REDIS_KEYS.REDIS_OTP, email)
+    redis.getRedisKey(redis.REDIS_KEYS.ADMIN_REDIS_OTP, email)
   );
   if (cachedOtp) {
     if (cachedOtp.otp !== otp) {
@@ -61,33 +60,30 @@ const verifyOtp = catchAsync(async (req, res) => {
         message: "Invalid OTP!",
       });
     } else {
-      const user = await authServices.userInfoService(email);
-      redis.remove(redis.getRedisKey(redis.REDIS_KEYS.REDIS_OTP, email));
+      const user = await adminAuthServices.userInfoService(email);
+      redis.remove(redis.getRedisKey(redis.REDIS_KEYS.ADMIN_REDIS_OTP, email));
       if (user) {
-        const token = await generateAuthTokens(user._id, user);
+        const token = user.createJWT();
 
         return res.status(httpStatus.OK).send({
           success: true,
           message: "Logged in Successfully",
           user,
-          ...token,
+          token,
         });
       } else {
-        const newUser = await authServices.newUserService(
-          email,
-          generateUsername(email)
-        );
+        const newUser = await adminAuthServices.newUserService(email);
         if (!newUser) {
           return res
             .status(httpStatus.INTERNAL_SERVER_ERROR)
             .send({ success: false, message: "Something went wrong" });
         }
-        const token = await generateAuthTokens(newUser._id, newUser);
+        const token = newUser.createJWT();
         return res.status(httpStatus.OK).send({
           success: true,
           message: "Logged in Successfully",
           user: newUser,
-          ...token,
+          token,
         });
       }
     }
